@@ -39,6 +39,9 @@ bun dev
 docker run -itd \
            --name jd_comment \
            -p 8086:3000 \
+           -e API_URL="https://spark-api-open.xf-yun.com/v1/chat/completions" \
+           -e API_KEY=" " \
+           -e MODEL="pro-128k" \
            --restart=always \
         gindex/jd_comment:latest
 ```
