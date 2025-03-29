@@ -11,7 +11,8 @@ export default function Home() {
   const [comment, setComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false); // 复制成功状态
 
-  const getData = async (page) => {
+  const getData = async () => {
+    fetchImages("1"); // 默认获取第一页图片
     if (title) {
       fetchComment(title);
     } else {
@@ -20,18 +21,18 @@ export default function Home() {
         const titleResult = await get_title(productId);
         if (titleResult === false) {
           setComment("获取商品标题失败，请检查商品ID");
-          return;
+          // return;
         } else {
           setTitle(titleResult); // 设置标题
           fetchComment(titleResult); // 使用获取到的标题获取评价
         }
 
-        
+
       } else {
         setComment("请输入商品标题以获取评价");
       }
     }
-    fetchImages(page);
+
   };
 
   // 获取商品图片
@@ -69,7 +70,7 @@ export default function Home() {
 
       const result = await response.json();
       if (result.status === 0 && result.data) {
-        return result.data.single.title  || false; // 返回标题
+        return result.data.single.title || false; // 返回标题
       } else {
         return false;;
       }
@@ -156,7 +157,7 @@ export default function Home() {
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
         />
-          <div className="flex flex-wrap gap-2 w-full ">
+        <div className="flex flex-wrap gap-2 w-full ">
           <button
             onClick={() => getData(page)}
             className="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 disabled:bg-gray-400 transition duration-300 flex-1 md:flex-none"
