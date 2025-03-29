@@ -20,7 +20,8 @@ export default function Home() {
         // 如果没有提供标题，使用 productId 获取标题
         const titleResult = await get_title(productId);
         if (titleResult === false) {
-          setComment("获取商品标题失败，请检查商品ID");
+          setComment("用ID获取商品标题失败，请输入商品标题以获取评价！"); // 设置提示信息
+          toast.error("用ID获取商品标题失败，请输入商品标题以获取评价！"); // 提示用户
           // return;
         } else {
           setTitle(titleResult); // 设置标题
