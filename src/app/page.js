@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ToastContainer, toast } from 'react-toastify';
-
+import { ToastContainer, toast } from "react-toastify";
 
 export default function Home() {
   const [data, setData] = useState({ imageUrls: [] });
@@ -12,21 +11,32 @@ export default function Home() {
   const [comment, setComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false); // 复制成功状态
 
-
   const getData = async (page) => {
     if (title) {
       fetchComment(title);
     } else {
-      setComment("请输入商品标题以获取评价");
+      if (productId) {
+        // 如果没有提供标题，使用 productId 获取标题
+        const titleResult = await get_title(productId);
+        if (titleResult === false) {
+          setComment("获取商品标题失败，请检查商品ID");
+          return;
+        } else {
+          setTitle(titleResult); // 设置标题
+          fetchComment(titleResult); // 使用获取到的标题获取评价
+        }
+
+        
+      } else {
+        setComment("请输入商品标题以获取评价");
+      }
     }
-    if (!data.imageUrls.length) {
-      fetchImages(page);
-    }
-  }
+    fetchImages(page);
+  };
 
   // 获取商品图片
   const fetchImages = async (pageNum = page) => {
-    if (!productId) { // 如果 productId 为空，直接返回，不进行请求
+    if (!productId) {
       setComment("请输入商品ID以获取图片");
       return;
     }
@@ -41,8 +51,6 @@ export default function Home() {
 
       const result = await response.json();
       setData(result.data);
-
-
     } catch (error) {
       console.error("获取数据失败:", error);
       setComment("获取失败，请重试！");
@@ -51,6 +59,24 @@ export default function Home() {
     }
   };
 
+  const get_title = async (id) => {
+    try {
+      const response = await fetch(`/api/mmbuy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      const result = await response.json();
+      if (result.status === 0 && result.data) {
+        return result.data.single.title  || false; // 返回标题
+      } else {
+        return false;;
+      }
+    } catch (error) {
+      return false; // 返回失败
+    }
+  }
   // 获取 AI 评价
   const fetchComment = async (title) => {
     setCommentLoading(true);
@@ -70,34 +96,19 @@ export default function Home() {
       setComment("评价获取失败");
     }
   };
-  
 
   // 复制评论内容到剪贴板
   const handleCopyComment = () => {
-    // toast("复制成功！");
     if (comment) {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(comment).then(() => {
-          toast.success('复制成功！');
-        }).catch((error) => {
-          toast.error('复制失败!');
+      navigator.clipboard
+        .writeText(comment)
+        .then(() => {
+          toast.success("复制成功！");
+        })
+        .catch((error) => {
+          toast.error("复制失败!");
           console.error("复制失败:", error);
         });
-      } else {
-        const textArea = document.createElement('textarea');
-        textArea.value = comment;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-          document.execCommand('copy');
-          toast.success('复制成功！');
-        } catch (error) {
-          toast.error('复制失败!');
-          console.error("复制失败:", error);
-        } finally {
-          document.body.removeChild(textArea);
-        }
-      }
     }
   };
 
@@ -117,9 +128,17 @@ export default function Home() {
     }
   };
 
+  // 清除输入框
+  const clearInputs = () => {
+    setTitle("");
+    setProductId("");
+  };
+
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow-lg">
-      <h1 className="text-3xl font-semibold text-center text-indigo-600 mb-6">京东商品图片评论</h1>
+      <h1 className="text-3xl font-semibold text-center text-indigo-600 mb-6">
+        京东商品图片评论
+      </h1>
 
       {/* 输入框和按钮 */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -128,10 +147,7 @@ export default function Home() {
           className="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="输入商品标题"
           value={title}
-          onChange={(e) =>
-            setTitle(e.target.value)
-
-          }
+          onChange={(e) => setTitle(e.target.value)}
         />
         <input
           type="text"
@@ -140,35 +156,39 @@ export default function Home() {
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
         />
-        <button
-          onClick={() => getData(page)}
-          className="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 disabled:bg-gray-400 transition duration-300"
-          disabled={loading}
-        >
-          {loading ? "获取中..." : "获取"}
-        </button>
-      </div>
+          <div className="flex flex-wrap gap-2 w-full ">
+          <button
+            onClick={() => getData(page)}
+            className="bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 disabled:bg-gray-400 transition duration-300 flex-1 md:flex-none"
+            disabled={loading}
+          >
+            {loading ? "获取中..." : "获取"}
+          </button>
+          <button
+            onClick={clearInputs}
+            className=" bg-red-500 text-white px-6 py-3 rounded-lg hover:bg-red-800 transition duration-300 flex-1 md:flex-none"
+          >
+            清除
+          </button>
+        </div>
 
+      </div>
       {/* 加载状态 */}
       {loading && <p className="text-center text-gray-500">加载中...</p>}
 
       {/* 渲染评论 */}
       <h2 className="text-xl font-semibold text-gray-700">AI 评价</h2>
-      {/* 复制评论按钮 */}
-      <div className="mt-4  text-lg text-gray-700 cursor-pointer" onClick={handleCopyComment}>
+      <div className="mt-4 text-lg text-gray-700 cursor-pointer" onClick={handleCopyComment}>
         {commentLoading ? "获取中..." : comment}
-        {/* <button
-          onClick={handleCopyComment}
-          className="ml-2 text-indigo-500 hover:text-indigo-700 focus:outline-none"
-        >
-          {copySuccess ? "已复制!" : "复制"}
-        </button> */}
       </div>
 
       {/* 渲染图片 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
         {data.imageUrls.map((url, index) => (
-          <div key={index} className="relative overflow-hidden rounded-lg shadow-lg transition transform hover:scale-105">
+          <div
+            key={index}
+            className="relative overflow-hidden rounded-lg shadow-lg transition transform hover:scale-105"
+          >
             <img src={url} alt="评论图片" className="w-full h-auto rounded-lg" />
           </div>
         ))}
