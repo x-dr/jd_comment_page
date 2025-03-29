@@ -145,14 +145,14 @@ export default function Home() {
         <input
           type="text"
           className="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="输入商品标题"
+          placeholder="商品标题"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
           type="text"
           className="border border-gray-300 p-3 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          placeholder="输入商品ID"
+          placeholder="请输入商品ID"
           value={productId}
           onChange={(e) => setProductId(e.target.value)}
         />
